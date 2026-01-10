@@ -14,7 +14,7 @@ export class YTMusic {
     this.baseURL = "https://music.youtube.com/youtubei/v1";
     this.context = {
       client: {
-        hl: "en",
+        hl: "ar", // Arabic to get native script in results
         gl: "US",
         clientName: "WEB_REMIX",
         clientVersion: "1.20251015.03.00",
