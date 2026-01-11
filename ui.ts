@@ -209,53 +209,33 @@ export const html = `<!DOCTYPE html>
   <div id="ytplayer"></div>
 </body>
 <script>
-// Block YouTube tracking requests before they happen
+// Completely disable ALL console output
 (function(){
-  // Override XMLHttpRequest to block tracking
-  var OrigXHR=window.XMLHttpRequest;
-  window.XMLHttpRequest=function(){
-    var xhr=new OrigXHR();
-    var origOpen=xhr.open;
-    xhr.open=function(method,url){
-      if(url&&(url.includes('log_event')||url.includes('ptracking')||url.includes('generate_204')||url.includes('pagead')||url.includes('doubleclick'))){
-        this._blocked=true;
-        return;
-      }
-      return origOpen.apply(this,arguments);
-    };
-    var origSend=xhr.send;
-    xhr.send=function(){
-      if(this._blocked)return;
-      return origSend.apply(this,arguments);
-    };
-    return xhr;
-  };
-  // Override fetch too
-  var origFetch=window.fetch;
-  window.fetch=function(url,opts){
-    if(url&&typeof url==='string'&&(url.includes('log_event')||url.includes('ptracking')||url.includes('generate_204')||url.includes('pagead'))){
-      return Promise.resolve(new Response('',{status:200}));
-    }
-    return origFetch.apply(this,arguments);
-  };
-  // Override Image to block tracking pixels
-  var OrigImage=window.Image;
-  window.Image=function(w,h){
-    var img=new OrigImage(w,h);
-    var origSrc=Object.getOwnPropertyDescriptor(HTMLImageElement.prototype,'src');
-    Object.defineProperty(img,'src',{
-      set:function(v){if(v&&(v.includes('generate_204')||v.includes('log_event')||v.includes('pagead')))return;origSrc.set.call(this,v)},
-      get:function(){return origSrc.get.call(this)}
-    });
-    return img;
-  };
-  // Suppress console errors
-  var oe=console.error;
-  console.error=function(){
-    var s=Array.prototype.join.call(arguments,' ');
-    if(s.includes('ERR_BLOCKED')||s.includes('youtube')||s.includes('log_event')||s.includes('net::'))return;
-    oe.apply(console,arguments);
-  };
+  console.log=function(){};
+  console.warn=function(){};
+  console.error=function(){};
+  console.info=function(){};
+  console.debug=function(){};
+  console.trace=function(){};
+  console.dir=function(){};
+  console.dirxml=function(){};
+  console.table=function(){};
+  console.group=function(){};
+  console.groupCollapsed=function(){};
+  console.groupEnd=function(){};
+  console.clear=function(){};
+  console.count=function(){};
+  console.countReset=function(){};
+  console.assert=function(){};
+  console.profile=function(){};
+  console.profileEnd=function(){};
+  console.time=function(){};
+  console.timeLog=function(){};
+  console.timeEnd=function(){};
+  console.timeStamp=function(){};
+  // Suppress window errors
+  window.onerror=function(){return true};
+  window.onunhandledrejection=function(e){e.preventDefault();return true};
 })();
 var tag=document.createElement('script');tag.src='https://www.youtube.com/iframe_api';document.head.appendChild(tag);
 var songs=[],yt=null,ready=false,playing=false,idx=-1,interval=null;
