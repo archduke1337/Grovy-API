@@ -256,11 +256,12 @@ async function handler(req: Request): Promise<Response> {
       return proxyAudio(audioUrl, req);
     }
 
-    // Download audio as M4A
+    // Download audio - returns URL for client-side download
     if (pathname === "/api/download") {
       const id = searchParams.get("id");
       const title = searchParams.get("title") || "audio";
       const artist = searchParams.get("artist") || "";
+      const redirect = searchParams.get("redirect") !== "0";
       if (!id) return error("Missing id");
 
       // Get stream URL - try piped first, then invidious
@@ -269,12 +270,10 @@ async function handler(req: Request): Promise<Response> {
       
       const piped = await fetchFromPiped(id);
       if (piped.success && piped.streamingUrls) {
-        // Find best audio - prefer mp4/m4a with MEDIUM quality
         const audio = piped.streamingUrls.find((s: any) => 
           s.type?.includes("audio/mp4") && s.audioQuality === "AUDIO_QUALITY_MEDIUM"
         ) || piped.streamingUrls.find((s: any) => s.type?.includes("audio"));
         if (audio) {
-          // Use proxy URL (url field) - directUrl is IP-locked
           audioUrl = audio.url;
           contentType = audio.type?.split(";")[0] || "audio/mp4";
         }
@@ -295,25 +294,22 @@ async function handler(req: Request): Promise<Response> {
 
       if (!audioUrl) return json({ success: false, error: "No audio stream found" }, 404);
 
-      // Create filename
       const ext = contentType.includes("webm") ? ".webm" : ".m4a";
       const filename = `${artist ? artist + " - " : ""}${title}`.replace(/[<>:"/\\|?*]/g, "").trim() + ext;
 
-      try {
-        const response = await fetch(audioUrl);
-        if (!response.ok) return json({ success: false, error: "Failed to fetch audio: " + response.status }, 502);
-
-        return new Response(response.body, {
+      // Redirect to audio URL - browser will handle download
+      if (redirect) {
+        return new Response(null, {
+          status: 302,
           headers: {
-            "Content-Type": contentType,
-            "Content-Disposition": `attachment; filename="${encodeURIComponent(filename)}"`,
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Expose-Headers": "Content-Disposition",
+            "Location": audioUrl,
+            ...corsHeaders,
           },
         });
-      } catch (err) {
-        return json({ success: false, error: "Download failed: " + String(err) }, 500);
       }
+
+      // Return URL for client to handle
+      return json({ success: true, url: audioUrl, filename, contentType });
     }
 
     // ============ LYRICS & INFO ============
