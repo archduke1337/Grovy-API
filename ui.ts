@@ -360,8 +360,16 @@ async function viewArtist(id,thumbEnc,nameEnc){
     // Use search thumbnail if available, otherwise API thumbnail
     var thumb=searchThumb||artist.thumbnail||artist.thumbnails?.[0]?.url||'';
     var name=searchName||artist.name||'Artist';
-    var desc=artist.description||'';
-    var descHtml=desc?'<div style="color:var(--dim);font-size:.75rem;margin-top:8px;max-width:500px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">'+esc(desc)+'</div>':'';
+    
+    // Fetch bio from Last.fm
+    var bio='';
+    try{
+      var bioRes=await fetch('/api/artist/info?artist='+encodeURIComponent(name));
+      var bioData=await bioRes.json();
+      if(bioData.bio)bio=bioData.bio.replace(/<[^>]*>/g,'').split('Read more')[0].trim();
+    }catch(e){}
+    
+    var descHtml=bio?'<div style="color:var(--dim);font-size:.75rem;margin-top:8px;max-width:500px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">'+esc(bio)+'</div>':'';
     var header='<div style="display:flex;align-items:flex-start;gap:20px;padding:20px;margin-bottom:20px;background:var(--surface);border-radius:12px;border:1px solid var(--border)"><img src="'+thumb+'" style="width:80px;height:80px;border-radius:50%;object-fit:cover;background:var(--surface2)"><div style="flex:1"><div style="font-size:1.2rem;font-weight:600">'+esc(name)+'</div><div style="color:var(--muted);font-size:.85rem">'+(artist.subscribers||'')+'</div>'+descHtml+'<button class="btn" style="margin-top:10px;padding:8px 16px;font-size:.8rem" onclick="goBack()">Back to Search</button></div></div>';
     document.getElementById('results').innerHTML=header;
     render(null,true);
