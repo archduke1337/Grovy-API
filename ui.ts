@@ -54,6 +54,8 @@ export const html = `<!DOCTYPE html>
     .name{font-size:.9rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .artist{font-size:.8rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .dur{font-size:.75rem;color:var(--dim);font-family:monospace}
+    .dl-btn{width:32px;height:32px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);color:var(--accent);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;margin-right:8px}
+    .dl-btn:hover{background:var(--accent);color:#000;border-color:var(--accent)}
     .empty{padding:48px;text-align:center;color:var(--dim)}
     .loading{display:none;padding:48px;text-align:center;color:var(--accent)}
     .tester-row{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}
@@ -318,10 +320,18 @@ function render(f,append){
       click="viewArtist('"+bid+"','"+encodeURIComponent(thumb)+"','"+encodeURIComponent(s.title||'')+"')";
     }
     var badge=type!=='song'&&type!=='video'?'<span style="font-size:.65rem;color:var(--accent);margin-left:8px;text-transform:uppercase">'+type+'</span>':'';
-    return '<div class="result'+(i===idx?' active':'')+'" onclick="'+click+'" style="cursor:pointer"><img class="thumb" src="'+thumb+'"><div class="info"><div class="name">'+esc(s.title||s.name||'Unknown')+badge+'</div><div class="artist">'+esc(s.artists?.map(a=>a.name).join(', ')||s.subtitle||'')+'</div></div><div class="dur">'+(s.duration||'')+'</div></div>';
+    var dlBtn=playable?'<button class="dl-btn" onclick="event.stopPropagation();download('+i+')" title="Download">↓</button>':'';
+    return '<div class="result'+(i===idx?' active':'')+'" onclick="'+click+'" style="cursor:pointer"><img class="thumb" src="'+thumb+'"><div class="info"><div class="name">'+esc(s.title||s.name||'Unknown')+badge+'</div><div class="artist">'+esc(s.artists?.map(a=>a.name).join(', ')||s.subtitle||'')+'</div></div>'+dlBtn+'<div class="dur">'+(s.duration||'')+'</div></div>';
   }).join('');
   if(append)el.innerHTML+=html;
   else el.innerHTML=html;
+}
+
+function download(i){
+  var s=songs[i];if(!s||!s.videoId)return;
+  var title=encodeURIComponent(s.title||'audio');
+  var artist=encodeURIComponent(s.artists?.map(a=>a.name).join(', ')||'');
+  window.open('/api/download?id='+s.videoId+'&title='+title+'&artist='+artist,'_blank');
 }
 
 function play(i){
