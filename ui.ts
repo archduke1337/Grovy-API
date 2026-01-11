@@ -7,7 +7,6 @@ export const html = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="connect-src 'self' https://verome-api.deno.dev https://www.youtube.com https://i.ytimg.com https://img.youtube.com; script-src 'self' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com;">
   <title>Virome API</title>
   <link rel="icon" href="/assets/logo.png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -210,15 +209,53 @@ export const html = `<!DOCTYPE html>
   <div id="ytplayer"></div>
 </body>
 <script>
-// Suppress YouTube IFrame API errors and network failures
+// Block YouTube tracking requests before they happen
 (function(){
-  var oe=console.error,ow=console.warn,ol=console.log;
-  var block=['postMessage','youtube','ERR_BLOCKED','ptracking','log_event','pagead','generate_204','yout_og'];
-  function shouldBlock(args){for(var i=0;i<args.length;i++){var m=String(args[i]||'');for(var j=0;j<block.length;j++)if(m.includes(block[j]))return true}return false}
-  console.error=function(){if(!shouldBlock(arguments))oe.apply(console,arguments)};
-  console.warn=function(){if(!shouldBlock(arguments))ow.apply(console,arguments)};
-  window.addEventListener('error',function(e){if(e.message&&block.some(b=>e.message.includes(b))){e.preventDefault();return false}},true);
-  window.addEventListener('unhandledrejection',function(e){if(e.reason&&block.some(b=>String(e.reason).includes(b))){e.preventDefault();return false}},true);
+  // Override XMLHttpRequest to block tracking
+  var OrigXHR=window.XMLHttpRequest;
+  window.XMLHttpRequest=function(){
+    var xhr=new OrigXHR();
+    var origOpen=xhr.open;
+    xhr.open=function(method,url){
+      if(url&&(url.includes('log_event')||url.includes('ptracking')||url.includes('generate_204')||url.includes('pagead')||url.includes('doubleclick'))){
+        this._blocked=true;
+        return;
+      }
+      return origOpen.apply(this,arguments);
+    };
+    var origSend=xhr.send;
+    xhr.send=function(){
+      if(this._blocked)return;
+      return origSend.apply(this,arguments);
+    };
+    return xhr;
+  };
+  // Override fetch too
+  var origFetch=window.fetch;
+  window.fetch=function(url,opts){
+    if(url&&typeof url==='string'&&(url.includes('log_event')||url.includes('ptracking')||url.includes('generate_204')||url.includes('pagead'))){
+      return Promise.resolve(new Response('',{status:200}));
+    }
+    return origFetch.apply(this,arguments);
+  };
+  // Override Image to block tracking pixels
+  var OrigImage=window.Image;
+  window.Image=function(w,h){
+    var img=new OrigImage(w,h);
+    var origSrc=Object.getOwnPropertyDescriptor(HTMLImageElement.prototype,'src');
+    Object.defineProperty(img,'src',{
+      set:function(v){if(v&&(v.includes('generate_204')||v.includes('log_event')||v.includes('pagead')))return;origSrc.set.call(this,v)},
+      get:function(){return origSrc.get.call(this)}
+    });
+    return img;
+  };
+  // Suppress console errors
+  var oe=console.error;
+  console.error=function(){
+    var s=Array.prototype.join.call(arguments,' ');
+    if(s.includes('ERR_BLOCKED')||s.includes('youtube')||s.includes('log_event')||s.includes('net::'))return;
+    oe.apply(console,arguments);
+  };
 })();
 var tag=document.createElement('script');tag.src='https://www.youtube.com/iframe_api';document.head.appendChild(tag);
 var songs=[],yt=null,ready=false,playing=false,idx=-1,interval=null;
