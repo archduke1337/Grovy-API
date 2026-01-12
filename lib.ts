@@ -966,15 +966,33 @@ export async function getDynamicInstances() {
     return instancesCache;
   }
 
+  // Hardcoded working Piped instances (they proxy streams through their CDN)
+  const workingPipedInstances = [
+    "https://api.piped.private.coffee",
+    "https://pipedapi.darkness.services",
+    "https://pipedapi.r4fo.com",
+    "https://api.piped.yt",
+    "https://pipedapi.kavin.rocks",
+    "https://pipedapi.adminforge.de",
+    "https://pipedapi.in.projectsegfau.lt",
+    "https://api.piped.projectsegfau.lt",
+    "https://pipedapi.leptons.xyz"
+  ];
+
   try {
     const response = await fetch("https://raw.githubusercontent.com/n-ce/Uma/main/dynamic_instances.json");
-    instancesCache = await response.json();
+    const data = await response.json();
+    
+    // Always use our working Piped instances
+    data.piped = workingPipedInstances;
+    
+    instancesCache = data;
     instancesCacheTime = now;
     return instancesCache;
   } catch {
     return {
-      piped: ["https://api.piped.private.coffee"],
-      invidious: ["https://invidious.nikkosphere.com", "https://yt.omada.cafe"],
+      piped: workingPipedInstances,
+      invidious: ["https://yt.omada.cafe", "https://y.com.sb", "https://inv.nadeko.net"],
     };
   }
 }
@@ -985,8 +1003,15 @@ export async function fetchFromPiped(videoId: string) {
 
   for (const instance of pipedInstances) {
     try {
-      const response = await fetch(`${instance}/streams/${videoId}`);
+      const response = await fetch(`${instance}/streams/${videoId}`, {
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" }
+      });
       const data = await response.json();
+
+      // Check for error response (bot detection)
+      if (data?.error) {
+        continue; // Try next instance
+      }
 
       if (data?.audioStreams?.length) {
         // Get the proxy host from the instance (e.g., pipedapi.kavin.rocks -> pipedproxy.kavin.rocks)

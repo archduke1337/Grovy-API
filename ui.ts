@@ -54,8 +54,7 @@ export const html = `<!DOCTYPE html>
     .name{font-size:.9rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .artist{font-size:.8rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .dur{font-size:.75rem;color:var(--dim);font-family:monospace}
-    .dl-btn{width:32px;height:32px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);color:var(--accent);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;margin-right:8px}
-    .dl-btn:hover{background:var(--accent);color:#000;border-color:var(--accent)}
+
     .empty{padding:48px;text-align:center;color:var(--dim)}
     .loading{display:none;padding:48px;text-align:center;color:var(--accent)}
     .tester-row{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}
@@ -133,7 +132,6 @@ export const html = `<!DOCTYPE html>
         <div class="section-title">Streaming & Lyrics</div>
         <div class="api-list">
           <div class="api-item"><span class="method">GET</span><span class="path">/api/stream?id=</span><span class="desc">Audio stream URLs</span></div>
-          <div class="api-item"><span class="method">GET</span><span class="path">/api/download?id=&title=&artist=</span><span class="desc">Download audio file</span></div>
           <div class="api-item"><span class="method">GET</span><span class="path">/api/proxy?url=</span><span class="desc">Audio proxy (CORS)</span></div>
           <div class="api-item"><span class="method">GET</span><span class="path">/api/lyrics?title=&artist=</span><span class="desc">Synced lyrics (LRC)</span></div>
         </div>
@@ -211,6 +209,7 @@ export const html = `<!DOCTYPE html>
   </div>
   
   <div id="ytplayer"></div>
+
 </body>
 <script>
 // Completely disable ALL console output
@@ -320,19 +319,10 @@ function render(f,append){
       click="viewArtist('"+bid+"','"+encodeURIComponent(thumb)+"','"+encodeURIComponent(s.title||'')+"')";
     }
     var badge=type!=='song'&&type!=='video'?'<span style="font-size:.65rem;color:var(--accent);margin-left:8px;text-transform:uppercase">'+type+'</span>':'';
-    var dlBtn=playable?'<button class="dl-btn" onclick="event.stopPropagation();download('+i+')" title="Download">↓</button>':'';
-    return '<div class="result'+(i===idx?' active':'')+'" onclick="'+click+'" style="cursor:pointer"><img class="thumb" src="'+thumb+'"><div class="info"><div class="name">'+esc(s.title||s.name||'Unknown')+badge+'</div><div class="artist">'+esc(s.artists?.map(a=>a.name).join(', ')||s.subtitle||'')+'</div></div>'+dlBtn+'<div class="dur">'+(s.duration||'')+'</div></div>';
+    return '<div class="result'+(i===idx?' active':'')+'" onclick="'+click+'" style="cursor:pointer"><img class="thumb" src="'+thumb+'"><div class="info"><div class="name">'+esc(s.title||s.name||'Unknown')+badge+'</div><div class="artist">'+esc(s.artists?.map(a=>a.name).join(', ')||s.subtitle||'')+'</div></div><div class="dur">'+(s.duration||'')+'</div></div>';
   }).join('');
   if(append)el.innerHTML+=html;
   else el.innerHTML=html;
-}
-
-function download(i){
-  var s=songs[i];if(!s||!s.videoId)return;
-  var title=encodeURIComponent(s.title||'audio');
-  var artist=encodeURIComponent(s.artists?.map(a=>a.name).join(', ')||'');
-  // Open download in new tab - server will proxy the audio
-  window.open('/api/download?id='+s.videoId+'&title='+title+'&artist='+artist,'_blank');
 }
 
 function play(i){
