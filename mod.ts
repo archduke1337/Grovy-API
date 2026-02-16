@@ -1,16 +1,12 @@
 /**
- * Virome API for Deno
+ * Virome API for Cloudflare Workers
  * YouTube Music, YouTube Search, and Last.fm API
  * 
- * Run with: deno run --allow-net --allow-env --allow-read mod.ts
- * Or deploy to Deno Deploy
+ * Deploy with: npx wrangler deploy
  */
 
-import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 import { YTMusic, YouTubeSearch, LastFM, fetchFromPiped, fetchFromInvidious, getLyrics, getTrendingMusic, getRadio, getTopArtists, getTopTracks, getArtistInfo, getTrackInfo, getSongComplete, getAlbumComplete, getArtistComplete, getFullChain } from "./lib.ts";
 import { html as uiHtml } from "./ui.ts";
-
-const PORT = parseInt(Deno.env.get("PORT") || "8000");
 
 const ytmusic = new YTMusic();
 const youtubeSearch = new YouTubeSearch();
@@ -82,13 +78,9 @@ async function handler(req: Request): Promise<Response> {
     // Root - UI
     if (pathname === "/") return new Response(uiHtml, { headers: { "Content-Type": "text/html", ...corsHeaders } });
 
-    // Logo
+    // Logo - Not available in Cloudflare Workers without assets binding
     if (pathname === "/assets/logo.png" || pathname === "/assets/Logo.png") {
-      try {
-        const logoPath = new URL("./assets/Logo.png", import.meta.url).pathname.replace(/^\/([A-Z]:)/, "$1");
-        const logo = await Deno.readFile(logoPath);
-        return new Response(logo, { headers: { "Content-Type": "image/png", ...corsHeaders } });
-      } catch { return new Response("Logo not found", { status: 404 }); }
+      return new Response("Logo not available", { status: 404 });
     }
 
     if (pathname === "/favicon.ico") return new Response(null, { status: 204 });
@@ -399,5 +391,9 @@ function parseVideo(video: any, channelId: string, channelName: string): any {
   return { id, authorId: channelId, duration: duration.toString(), author: channelName, views: views.toString(), uploaded: uploaded.toString(), title, isShort: duration > 0 && duration <= 60, thumbnail: video?.thumbnail?.thumbnails?.slice(-1)[0]?.url || "" };
 }
 
-console.log(`Virome API running on http://localhost:${PORT}`);
-serve(handler, { port: PORT });
+// Cloudflare Workers export
+export default {
+  async fetch(request: Request, env: any): Promise<Response> {
+    return handler(request);
+  },
+};
