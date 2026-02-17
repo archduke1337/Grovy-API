@@ -87,16 +87,16 @@ Server runs at `http://localhost:8000`
 
 ```bash
 # Search songs
-curl "https://verome-api.deno.dev/api/search?q=Blinding%20Lights&filter=songs"
+curl "https://ytapi.gauravramyadav.workers.dev/api/search?q=Blinding%20Lights&filter=songs"
 
 # Get lyrics
-curl "https://verome-api.deno.dev/api/lyrics?title=Blinding%20Lights&artist=The%20Weeknd"
+curl "https://ytapi.gauravramyadav.workers.dev/api/lyrics?title=Blinding%20Lights&artist=The%20Weeknd"
 
 # Stream URLs
-curl "https://verome-api.deno.dev/api/stream?id=4NRXx6U8ABQ"
+curl "https://ytapi.gauravramyadav.workers.dev/api/stream?id=4NRXx6U8ABQ"
 
 # Radio mix
-curl "https://verome-api.deno.dev/api/radio?videoId=4NRXx6U8ABQ"
+curl "https://ytapi.gauravramyadav.workers.dev/api/radio?videoId=4NRXx6U8ABQ"
 ```
 
 ## Project Structure
