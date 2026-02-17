@@ -2,7 +2,7 @@
   <img src="assets/Logo.png" alt="Virome API" width="120">
 
   <h1 style="margin:0; font-size:60px; line-height:1;">
-    Virome API
+    Grovy API
   </h1>
 </div>
 
@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <a href="https://verome-api.deno.dev/">Live Demo</a>
+  <a href="https://ytapi.gauravramyadav.workers.dev/">Live Demo</a>
 </p>
 
 ---
