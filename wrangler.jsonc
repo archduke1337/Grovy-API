@@ -1,9 +1,7 @@
 {
   "name": "ytapi",
   "compatibility_date": "2026-02-16",
-  "main": "mod.ts"
-}
-{
+  "main": "mod.ts",
   "observability": {
     "enabled": false,
     "head_sampling_rate": 1,
